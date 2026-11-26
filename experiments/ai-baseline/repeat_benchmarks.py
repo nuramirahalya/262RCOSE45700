@@ -12,7 +12,7 @@ parser.add_argument("--repetitions", type=int, default=5)
 parser.add_argument(
     "--models",
     nargs="+",
-    choices=["smallcnn", "resnet18_chunked"],
+    choices=["smallcnn", "resnet18_chunked", "attention_core"],
     default=["smallcnn", "resnet18_chunked"],
 )
 args = parser.parse_args()

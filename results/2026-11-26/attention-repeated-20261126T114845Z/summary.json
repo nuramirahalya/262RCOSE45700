@@ -1,0 +1,96 @@
+{
+  "source_manifest": "manifest.json",
+  "percentile_method": "Pooled warm samples; linear interpolation, inclusive",
+  "variation_method": "Sample standard deviation of run means / their mean",
+  "throughput_scope": "Sequential batches; model execution and output copy to CPU",
+  "results": [
+    {
+      "model": "attention_core",
+      "batch_size": 1,
+      "mode": "compile",
+      "runs": 5,
+      "samples": 250,
+      "warm_mean_ms": 0.18032378144562244,
+      "warm_p50_ms": 0.1776630524545908,
+      "warm_p95_ms": 0.20230552181601524,
+      "throughput_sequences_per_second": 5545.580244508987,
+      "run_means_ms": [
+        0.1800028793513775,
+        0.18347655422985554,
+        0.181477265432477,
+        0.17731180414557457,
+        0.17935040406882763
+      ],
+      "run_mean_cv_percent": 1.2824851380319922,
+      "sequence_length": 64,
+      "heads": 4,
+      "head_dimension": 64
+    },
+    {
+      "model": "attention_core",
+      "batch_size": 1,
+      "mode": "eager",
+      "runs": 5,
+      "samples": 250,
+      "warm_mean_ms": 0.4622283149510622,
+      "warm_p50_ms": 0.4528674762696028,
+      "warm_p95_ms": 0.5398710258305073,
+      "throughput_sequences_per_second": 2163.433021419022,
+      "run_means_ms": [
+        0.4582286439836025,
+        0.46149661764502525,
+        0.4669234249740839,
+        0.46279624104499817,
+        0.46169664710760117
+      ],
+      "run_mean_cv_percent": 0.6771063031486712,
+      "sequence_length": 64,
+      "heads": 4,
+      "head_dimension": 64
+    },
+    {
+      "model": "attention_core",
+      "batch_size": 1,
+      "mode": "compile",
+      "runs": 5,
+      "samples": 250,
+      "warm_mean_ms": 0.18198029696941376,
+      "warm_p50_ms": 0.17953291535377502,
+      "warm_p95_ms": 0.19507997203618288,
+      "throughput_sequences_per_second": 5495.100385334982,
+      "run_means_ms": [
+        0.18083921633660793,
+        0.1909028459340334,
+        0.1759243756532669,
+        0.17925760708749294,
+        0.1829774398356676
+      ],
+      "run_mean_cv_percent": 3.0840619044672746,
+      "sequence_length": 128,
+      "heads": 4,
+      "head_dimension": 64
+    },
+    {
+      "model": "attention_core",
+      "batch_size": 1,
+      "mode": "eager",
+      "runs": 5,
+      "samples": 250,
+      "warm_mean_ms": 0.45606477931141853,
+      "warm_p50_ms": 0.4501070361584425,
+      "warm_p95_ms": 0.5245279986411333,
+      "throughput_sequences_per_second": 2192.6709655365903,
+      "run_means_ms": [
+        0.4543193243443966,
+        0.46483078971505165,
+        0.4528019391000271,
+        0.4553691390901804,
+        0.45300270430743694
+      ],
+      "run_mean_cv_percent": 1.0985035150736098,
+      "sequence_length": 128,
+      "heads": 4,
+      "head_dimension": 64
+    }
+  ]
+}

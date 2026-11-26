@@ -1,0 +1,12 @@
+Batch,Eager_ms,Compile_ms,Speedup
+Attention input shape: (1, 4, 64, 64)
+Batch 1 first call: Eager=1468.325 ms, Compile=304.736 ms
+Batch 1: max_diff=0.000000, outputs_close=True
+CPU checks: Eager=True, Compile=True
+1,0.463,0.177,2.61
+Attention input shape: (1, 4, 128, 64)
+Batch 1 first call: Eager=1401.463 ms, Compile=255.568 ms
+Batch 1: max_diff=0.001953, outputs_close=True
+CPU checks: Eager=True, Compile=True
+1,0.455,0.179,2.54
+Saved 2 results to /root/aitegin-attention-benchmark/attention-repeated-20261126T114845Z/attention_core-run-04.json

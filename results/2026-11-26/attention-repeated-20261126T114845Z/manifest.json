@@ -1,0 +1,44 @@
+{
+  "repetitions": 5,
+  "models": [
+    "attention_core"
+  ],
+  "protocol": "Sequential fresh processes; persistent cache uncontrolled",
+  "runs": [
+    {
+      "model": "attention_core",
+      "repetition": 1,
+      "exit_code": 0,
+      "report": "attention_core-run-01.json",
+      "log": "attention_core-run-01.log"
+    },
+    {
+      "model": "attention_core",
+      "repetition": 2,
+      "exit_code": 0,
+      "report": "attention_core-run-02.json",
+      "log": "attention_core-run-02.log"
+    },
+    {
+      "model": "attention_core",
+      "repetition": 3,
+      "exit_code": 0,
+      "report": "attention_core-run-03.json",
+      "log": "attention_core-run-03.log"
+    },
+    {
+      "model": "attention_core",
+      "repetition": 4,
+      "exit_code": 0,
+      "report": "attention_core-run-04.json",
+      "log": "attention_core-run-04.log"
+    },
+    {
+      "model": "attention_core",
+      "repetition": 5,
+      "exit_code": 0,
+      "report": "attention_core-run-05.json",
+      "log": "attention_core-run-05.log"
+    }
+  ]
+}

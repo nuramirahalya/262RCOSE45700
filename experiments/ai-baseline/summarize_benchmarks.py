@@ -35,7 +35,19 @@ for run in manifest["runs"]:
 
     if report["model"] != expected_model or report["cpu_fallback"] is not False:
         raise SystemExit(f"Unexpected model or fallback setting: {key}")
-    if [row["batch_size"] for row in report["results"]] != expected_batches:
+    if run["model"] == "attention_core":
+        shapes = [
+            (
+                row["batch_size"],
+                row.get("sequence_length"),
+                row.get("heads"),
+                row.get("head_dimension"),
+            )
+            for row in report["results"]
+        ]
+        if shapes != [(1, 64, 4, 64), (1, 128, 4, 64)]:
+            raise SystemExit(f"Unexpected attention shapes: {key}")
+    elif [row["batch_size"] for row in report["results"]] != expected_batches:
         raise SystemExit(f"Unexpected batches: {key}")
 
     for row in report["results"]:
@@ -52,13 +64,27 @@ for run in manifest["runs"]:
                 raise SystemExit(f"Missing timings: {key}, {mode}")
             if any(not math.isfinite(value) or value <= 0 for value in samples):
                 raise SystemExit(f"Invalid timings: {key}, {mode}")
-            groups[(run["model"], row["batch_size"], mode)].append(samples)
+            groups[(
+                run["model"],
+                row["batch_size"],
+                row.get("sequence_length", 0),
+                mode,
+            )].append(samples)
 
 if seen != expected:
     raise SystemExit("Some expected repetitions are missing.")
 
 summary = []
-for (model, batch, mode), runs in sorted(groups.items()):
+for (model, batch, sequence_length, mode), runs in sorted(groups.items()):
+    if len(runs) != repetitions or len(runs) < 2:
+        raise SystemExit("Expected at least two repetitions per configuration.")
+    attention = model == "attention_core"
+    throughput_key = (
+        "throughput_sequences_per_second"
+        if attention else "throughput_images_per_second"
+    )
+    throughput_unit = "sequences/s" if attention else "images/s"
+    shape_label = f" sequence {sequence_length}" if attention else ""
     samples = [value for run in runs for value in run]
     run_means = [statistics.mean(run) for run in runs]
     mean_ms = statistics.mean(samples)
@@ -71,17 +97,23 @@ for (model, batch, mode), runs in sorted(groups.items()):
         "warm_mean_ms": mean_ms,
         "warm_p50_ms": statistics.median(samples),
         "warm_p95_ms": statistics.quantiles(samples, n=100, method="inclusive")[94],
-        "throughput_images_per_second": batch * 1000 / mean_ms,
+        throughput_key: batch * 1000 / mean_ms,
         "run_means_ms": run_means,
         "run_mean_cv_percent": statistics.stdev(run_means)
         / statistics.mean(run_means) * 100,
     }
+    if attention:
+        row.update({
+            "sequence_length": sequence_length,
+            "heads": 4,
+            "head_dimension": 64,
+        })
     summary.append(row)
     print(
-        f"{model} batch {batch} {mode}: "
+        f"{model} batch {batch}{shape_label} {mode}: "
         f"mean={mean_ms:.3f} ms, p50={row['warm_p50_ms']:.3f} ms, "
         f"p95={row['warm_p95_ms']:.3f} ms, "
-        f"throughput={row['throughput_images_per_second']:.1f} images/s, "
+        f"throughput={row[throughput_key]:.1f} {throughput_unit}, "
         f"run-mean CV={row['run_mean_cv_percent']:.2f}%"
     )
 

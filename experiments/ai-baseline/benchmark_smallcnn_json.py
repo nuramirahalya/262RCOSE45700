@@ -8,7 +8,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--output", type=Path, required=True)
 parser.add_argument(
     "--model",
-    choices=["smallcnn", "resnet18_chunked"],
+    choices=["smallcnn", "resnet18_chunked", "attention_core"],
     default="smallcnn",
 )
 args = parser.parse_args()
@@ -24,7 +24,13 @@ with config.cpu_fallback(False):
 
     from models.project_models import build_model_pair, make_input
 
-    reference, model = build_model_pair(args.model, seed=42)
+    if args.model == "attention_core":
+        from experiments.attention.attention_core import AttentionCore
+
+        reference = AttentionCore().eval()
+        model = AttentionCore().eval()
+    else:
+        reference, model = build_model_pair(args.model, seed=42)
     device = torch.device("furiosa:0")
     model = model.to(device)
 
@@ -41,11 +47,11 @@ with config.cpu_fallback(False):
 
         with torch.inference_mode():
             for _ in range(warmup):
-                model_fn(x).detach().cpu()
+                model_fn(*x).detach().cpu()
 
             for _ in range(runs):
                 start = time.perf_counter()
-                model_fn(x).detach().cpu()
+                model_fn(*x).detach().cpu()
                 times.append((time.perf_counter() - start) * 1000)
 
         return times
@@ -54,21 +60,42 @@ with config.cpu_fallback(False):
 
     results = []
 
-    batches = [1, 4, 8, 16] if args.model == "smallcnn" else [1]
-    for batch in batches:
-        x_cpu = make_input(args.model, batch=batch, seed=43)
+    if args.model == "attention_core":
+        configurations = [(1, 64), (1, 128)]
+    elif args.model == "smallcnn":
+        configurations = [(batch, None) for batch in [1, 4, 8, 16]]
+    else:
+        configurations = [(1, None)]
+
+    for batch, sequence_length in configurations:
+        configuration = {}
+        if args.model == "attention_core":
+            shape = (batch, 4, sequence_length, 64)
+            generator = torch.Generator().manual_seed(43)
+            x_cpu = tuple(
+                torch.randn(shape, generator=generator, dtype=torch.bfloat16)
+                for _ in range(3)
+            )
+            configuration = {
+                "sequence_length": sequence_length,
+                "heads": 4,
+                "head_dimension": 64,
+            }
+            print(f"Attention input shape: {shape}", flush=True)
+        else:
+            x_cpu = (make_input(args.model, batch=batch, seed=43),)
         with torch.inference_mode():
-            reference_output = reference(x_cpu).float()
-        x = x_cpu.to(device)
+            reference_output = reference(*x_cpu).float()
+        x = tuple(value.to(device) for value in x_cpu)
 
 
         with torch.inference_mode():
             start = time.perf_counter()
-            eager_output = model(x).detach().cpu()
+            eager_output = model(*x).detach().cpu()
             eager_first_ms = (time.perf_counter() - start) * 1000
 
             start = time.perf_counter()
-            compiled_output = compiled(x).detach().cpu()
+            compiled_output = compiled(*x).detach().cpu()
             compile_first_ms = (time.perf_counter() - start) * 1000
 
             eager_output = eager_output.float()
@@ -107,6 +134,7 @@ with config.cpu_fallback(False):
         if not (is_close and eager_matches_cpu and compile_matches_cpu):
             results.append({
                 "batch_size": batch,
+                **configuration,
                 "status": "correctness_failed",
                 "outputs_close": is_close,
                 "eager_matches_cpu": eager_matches_cpu,
@@ -127,6 +155,7 @@ with config.cpu_fallback(False):
         )
         results.append({
             "batch_size": batch,
+            **configuration,
             "status": "passed",
             "eager_matches_cpu": eager_matches_cpu,
             "compile_matches_cpu": compile_matches_cpu,
